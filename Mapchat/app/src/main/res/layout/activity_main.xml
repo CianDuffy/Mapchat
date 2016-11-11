@@ -10,8 +10,30 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.cianduffy.mapchat.MainActivity">
 
-    <TextView
+    <Button
+        android:text= "@string/new_message_btn_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/btn_new_message"
+        android:onClick="openNewMessageActivity" />
+
+    <Button
+        android:text="@string/map_btn_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/btn_map"
+        android:onClick="openMapActivity" />
+
+    <Button
+        android:text="@string/message_history_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/btn_message_history"
+        android:onClick="openMessageHistoryActivity" />
 </RelativeLayout>
