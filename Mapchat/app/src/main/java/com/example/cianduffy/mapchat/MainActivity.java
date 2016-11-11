@@ -11,10 +11,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        String hello;
     }
 
     public void openNewMessageActivity(View view) {
+        System.out.print("WHATS UP!!!");
+        Intent intent = new Intent(this, NewMessageActivity.class);
+        startActivity(intent);
     }
 
     public void openMapActivity(View view) {
