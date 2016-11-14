@@ -9,5 +9,6 @@ public class Message {
     public String messageText;
     public double longitude;
     public double latitude;
+    public long timestamp;
 
 }

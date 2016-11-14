@@ -1,27 +1,27 @@
 {
   "project_info": {
-    "project_number": "578326710927",
-    "firebase_url": "https://mapchat-f6f25.firebaseio.com",
-    "project_id": "mapchat-f6f25",
-    "storage_bucket": "mapchat-f6f25.appspot.com"
+    "project_number": "591953295476",
+    "firebase_url": "https://mapchat-1d2c8.firebaseio.com",
+    "project_id": "mapchat-1d2c8",
+    "storage_bucket": "mapchat-1d2c8.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:578326710927:android:f73f15d29350d307",
+        "mobilesdk_app_id": "1:591953295476:android:f73f15d29350d307",
         "android_client_info": {
           "package_name": "com.example.cianduffy.mapchat"
         }
       },
       "oauth_client": [
         {
-          "client_id": "578326710927-tjthcnak41338d7rbhln784q70m4e94f.apps.googleusercontent.com",
+          "client_id": "591953295476-henaedakgtharlbv64m3vrmc4eur1tq9.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBx1HgrUOrP99dvOgGtQrxcp4WV35lxXOQ"
+          "current_key": "AIzaSyBStUj1gLpAiNUxd1oYArk9LAvFL6X03dw"
         }
       ],
       "services": {

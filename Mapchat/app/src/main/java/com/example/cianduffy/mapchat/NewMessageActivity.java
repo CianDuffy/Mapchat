@@ -6,12 +6,17 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class NewMessageActivity extends AppCompatActivity {
 
@@ -20,6 +25,7 @@ public class NewMessageActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private Location lastKnownLocation;
     private String locationProvider;
+    private DatabaseReference database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,39 +35,43 @@ public class NewMessageActivity extends AppCompatActivity {
 
         newMessageEditText = (EditText) findViewById(R.id.new_message_edit_text);
 
+        database = FirebaseDatabase.getInstance().getReference();
+
         setupLocationManager();
     }
 
     public void sendMessage(View view) {
+        String messageText = newMessageEditText.getText().toString();
 
-        // Initialise Message Dictionary
+        if (messageText.length() > 0 && lastKnownLocation != null) {
 
-        // Get Message Body
-        String messageBody = newMessageEditText.getText().toString();
-        System.out.println("Message body = " + messageBody);
+            // Initialise Message Object
+            Message message = new Message();
 
-        // Get latitude and longitude of last known location
-        if (lastKnownLocation != null) {
-            double latitude = lastKnownLocation.getLatitude();
-            double longitude = lastKnownLocation.getLongitude();
+            // Add Message Text
+            message.messageText = messageText;
 
-            System.out.println("Latitude = " + latitude);
-            System.out.println("Longitude = " + longitude);
+            // Add location information
+            message.latitude = lastKnownLocation.getLatitude();
+            message.longitude = lastKnownLocation.getLongitude();
+
+            // Add Timestamp
+            message.timestamp = System.currentTimeMillis();
+
+            // Upload to server
+            database.child("Messages").push().setValue(message);
+
+            // Clear text field
+            newMessageEditText.setText("");
         } else {
-            System.out.println("Location = null");
+            Log.e("ERROR", "Location not found");
+            Context context = getApplicationContext();
+            CharSequence text = "Unable to send message";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
         }
-
-        // Create Timestamp
-        Long currentTimeMillis = System.currentTimeMillis();
-        String timeStamp = currentTimeMillis.toString();
-        System.out.println("TimeStamp = " + timeStamp);
-
-        // Add items to Message Dictionary
-
-        // Upload to server
-
-        // Clear text field
-        newMessageEditText.setText("");
     }
 
     private void setupLocationManager() {

@@ -7,9 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-
 public class MainActivity extends AppCompatActivity {
 
     private boolean allPermissionsGranted;
@@ -19,23 +16,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         allPermissionsGranted = checkForRequiredPermissions();
-
     }
 
     public void openNewMessageActivity(View view) {
-
         // If location and Internet permissions granted
         if (allPermissionsGranted) {
-            System.out.println("openNewMessageActivity called");
-            Intent intent = new Intent(this, NewMessageActivity.class);
-            startActivity(intent);
+            openActivity(NewMessageActivity.class);
         }
     }
 
     public void openMapActivity(View view) {
-//        openActivity(MapActivity.class);
-        Intent intent = new Intent(this, MapActivity.class);
-        startActivity(intent);
+        openActivity(MapActivity.class);
     }
 
     public void openMessageHistoryActivity(View view) {
