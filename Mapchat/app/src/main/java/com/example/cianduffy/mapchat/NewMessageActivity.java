@@ -12,7 +12,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -39,32 +41,37 @@ public class NewMessageActivity extends AppCompatActivity {
     }
 
     public void sendMessage(View view) {
-        // Get latitude and longitude of last known location
-        if (lastKnownLocation != null) {
+        String messageText = newMessageEditText.getText().toString();
 
-            // Initialise Message Dictionary
+        if (messageText.length() > 0 && lastKnownLocation != null) {
+
+            // Initialise Message Object
             Message message = new Message();
 
-            // Get Message Text
-            String messageText = newMessageEditText.getText().toString();
+            // Add Message Text
             message.messageText = messageText;
 
-            // Get location information
+            // Add location information
             message.latitude = lastKnownLocation.getLatitude();
             message.longitude = lastKnownLocation.getLongitude();
 
-            // Create Timestamp
+            // Add Timestamp
             message.timestamp = System.currentTimeMillis();
 
             // Upload to server
             database.child("Messages").push().setValue(message);
+
+            // Clear text field
+            newMessageEditText.setText("");
         } else {
             Log.e("ERROR", "Location not found");
-            
-        }
+            Context context = getApplicationContext();
+            CharSequence text = "Unable to send message";
+            int duration = Toast.LENGTH_SHORT;
 
-        // Clear text field
-        newMessageEditText.setText("");
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
     private void setupLocationManager() {
