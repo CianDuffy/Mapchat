@@ -3,4 +3,6 @@
     <string name="new_message_btn_text">New Message</string>
     <string name="map_btn_text">Map</string>
     <string name="message_history_text">Message History</string>
+    <string name="send_message_edit_text_placeholder">Send message</string>
+    <string name="send_btn_text">Send</string>
 </resources>
