@@ -6,12 +6,15 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class NewMessageActivity extends AppCompatActivity {
 
@@ -20,6 +23,7 @@ public class NewMessageActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private Location lastKnownLocation;
     private String locationProvider;
+    private DatabaseReference database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,36 +33,35 @@ public class NewMessageActivity extends AppCompatActivity {
 
         newMessageEditText = (EditText) findViewById(R.id.new_message_edit_text);
 
+        database = FirebaseDatabase.getInstance().getReference();
+
         setupLocationManager();
     }
 
     public void sendMessage(View view) {
-
-        // Initialise Message Dictionary
-
-        // Get Message Body
-        String messageBody = newMessageEditText.getText().toString();
-        System.out.println("Message body = " + messageBody);
-
         // Get latitude and longitude of last known location
         if (lastKnownLocation != null) {
-            double latitude = lastKnownLocation.getLatitude();
-            double longitude = lastKnownLocation.getLongitude();
 
-            System.out.println("Latitude = " + latitude);
-            System.out.println("Longitude = " + longitude);
+            // Initialise Message Dictionary
+            Message message = new Message();
+
+            // Get Message Text
+            String messageText = newMessageEditText.getText().toString();
+            message.messageText = messageText;
+
+            // Get location information
+            message.latitude = lastKnownLocation.getLatitude();
+            message.longitude = lastKnownLocation.getLongitude();
+
+            // Create Timestamp
+            message.timestamp = System.currentTimeMillis();
+
+            // Upload to server
+            database.child("Messages").push().setValue(message);
         } else {
-            System.out.println("Location = null");
+            Log.e("ERROR", "Location not found");
+            
         }
-
-        // Create Timestamp
-        Long currentTimeMillis = System.currentTimeMillis();
-        String timeStamp = currentTimeMillis.toString();
-        System.out.println("TimeStamp = " + timeStamp);
-
-        // Add items to Message Dictionary
-
-        // Upload to server
 
         // Clear text field
         newMessageEditText.setText("");
