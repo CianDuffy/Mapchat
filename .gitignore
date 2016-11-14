@@ -1,3 +1,9 @@
+#Google Services file
+google-services.json
+
+#DS_Store
+.DS_Store
+
 # Built application files
 *.apk
 *.ap_
