@@ -9,22 +9,26 @@ import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class NewMessageActivity extends AppCompatActivity {
 
     EditText newMessageEditText;
+    Button sendMessageButton;
 
     private LocationManager locationManager;
     private Location lastKnownLocation;
     private String locationProvider;
+
     private DatabaseReference database;
 
     @Override
@@ -34,6 +38,29 @@ public class NewMessageActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         newMessageEditText = (EditText) findViewById(R.id.new_message_edit_text);
+        sendMessageButton = (Button) findViewById(R.id.btn_send_message);
+        sendMessageButton.setEnabled(false);
+
+        newMessageEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.toString().trim().length() == 0) {
+                    sendMessageButton.setEnabled(false);
+                } else {
+                    sendMessageButton.setEnabled(true);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
 
         database = FirebaseDatabase.getInstance().getReference();
 
