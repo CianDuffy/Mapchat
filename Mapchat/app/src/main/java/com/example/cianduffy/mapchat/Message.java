@@ -10,5 +10,4 @@ public class Message {
     public double longitude;
     public double latitude;
     public long timestamp;
-
 }

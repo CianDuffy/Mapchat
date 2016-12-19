@@ -14,9 +14,18 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
 
 public class NewMessageActivity extends AppCompatActivity {
 
@@ -26,6 +35,8 @@ public class NewMessageActivity extends AppCompatActivity {
     private Location lastKnownLocation;
     private String locationProvider;
     private DatabaseReference database;
+
+    private ArrayList<Message> existingMessages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,13 +48,51 @@ public class NewMessageActivity extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance().getReference();
 
+        setupExistingMessages();
         setupLocationManager();
     }
 
-    public void sendMessage(View view) {
-        String messageText = newMessageEditText.getText().toString();
+    public void composeMessage(View view) {
+        Message[] inRangeMessages = messagesWithin10Meters();
 
-        if (messageText.length() > 0 && lastKnownLocation != null) {
+        String messageText = newMessageEditText.getText().toString();
+        if (messageText.length() > 0) {
+            if(inRangeMessages.length == 0) {
+                sendMessage(messageText);
+            } else {
+                // append message
+                for(Message message : inRangeMessages) {
+                    database.child("Messages").child("id").child("messageText").setValue(message.messageText + messageText);
+                }
+            }
+        }
+    }
+
+    private static double EARTH_RADIUS = 6373000;
+
+    private Message[] messagesWithin10Meters() {
+        ArrayList<Message> messages = new ArrayList<Message>();
+        double lat1 = lastKnownLocation.getLatitude();
+        double lon1 = lastKnownLocation.getLongitude();
+
+        for(Message message : existingMessages) {
+            double lat2 = message.latitude;
+            double lon2 = message.longitude;
+
+            double dlon = lon2 - lon1;
+            double dlat = lat2 - lat1;
+            double x = Math.pow(Math.sin(dlat/2), 2);
+            double a = Math.pow((x + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon/2)), 2);
+            double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            double distance = EARTH_RADIUS * c;
+            messages.add(message);
+        }
+        return (Message[]) messages.toArray();
+    }
+
+    public void sendMessage(String messageText) {
+
+        if (lastKnownLocation != null) {
 
             // Initialise Message Object
             Message message = new Message();
@@ -130,5 +179,26 @@ public class NewMessageActivity extends AppCompatActivity {
         else {
             return locationNet;
         }
+    }
+
+    private void setupExistingMessages() {
+        final DatabaseReference ref = database.child("Messages").getRef();
+
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                existingMessages = new ArrayList<Message>();
+                for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
+                    Message message = msgSnapshot.getValue(Message.class);
+                    existingMessages.add(message);
+                }
+                ref.removeEventListener(this);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
     }
 }
