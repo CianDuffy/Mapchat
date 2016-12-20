@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openMessageHistoryActivity(View view) {
-
+        openActivity(MessageListActivity.class);
     }
 
     private void openActivity(Class openingClass) {
