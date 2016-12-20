@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Created by David on 16/12/2016.
  */
 
-public class MessageListActivity  extends AppCompatActivity {
+public class MessageListActivity extends AppCompatActivity {
 
     private DatabaseReference database;
     private ListView messageList;
@@ -32,10 +32,10 @@ public class MessageListActivity  extends AppCompatActivity {
         messages = new ArrayList<String>();
 
         database = FirebaseDatabase.getInstance().getReference();
-
+        setupMessageList();
     }
 
-    private void setUpMap() {
+    private void setupMessageList() {
         final DatabaseReference ref = database.child("Messages").getRef();
 
         ref.addValueEventListener(new ValueEventListener() {
@@ -44,11 +44,11 @@ public class MessageListActivity  extends AppCompatActivity {
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
                     Message message = msgSnapshot.getValue(Message.class);
                     if (message != null) {
-                        messages.add(message.messageText);
+                        messages.add(message.timestamp + ": " + message.messageText);
                     }
                 }
                 ref.removeEventListener(this);
-                setupList();
+                populateList();
             }
 
             @Override
@@ -56,10 +56,9 @@ public class MessageListActivity  extends AppCompatActivity {
                 System.out.println("The read failed: " + databaseError.getCode());
             }
         });
-
     }
 
-    private void setupList() {
+    private void populateList() {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, messages);
         messageList.setAdapter(adapter);

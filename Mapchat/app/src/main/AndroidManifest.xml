@@ -34,6 +34,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.cianduffy.mapchat.MainActivity" />
         </activity>
+        <activity android:name=".MessageListActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.cianduffy.mapchat.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
