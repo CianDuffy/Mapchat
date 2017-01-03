@@ -14,11 +14,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,7 +22,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class NewMessageActivity extends AppCompatActivity {
+public class NewMessageActivity extends AppCompatActivity  implements LocationListener {
 
     EditText newMessageEditText;
 
@@ -36,7 +31,8 @@ public class NewMessageActivity extends AppCompatActivity {
     private String locationProvider;
     private DatabaseReference database;
 
-    private ArrayList<Message> existingMessages;
+    private ArrayList<MessageLocation> existingLocations;
+    private int MIN_DISTANCE = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,36 +44,40 @@ public class NewMessageActivity extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance().getReference();
 
-        setupExistingMessages();
+        setupExistingLocations();
         setupLocationManager();
     }
 
     public void composeMessage(View view) {
-        Message[] inRangeMessages = messagesWithin10Meters();
+        MessageLocation[] inRangeLocations = locationsWithin10Meters();
 
         String messageText = newMessageEditText.getText().toString();
         if (messageText.length() > 0) {
-            if(inRangeMessages.length == 0) {
-                sendMessage(messageText);
+            Message message = createMessage(messageText);
+            if(inRangeLocations.length == 0) {
+                MessageLocation location = createLocation(message);
+                // Upload to server
+                database.child("Locations").push().setValue(location);
             } else {
-                // append message
-                for(Message message : inRangeMessages) {
-                    database.child("Messages").child("id").child("messageText").setValue(message.messageText + messageText);
-                }
+                // NOT SURE ABOUT THIS ID YET
+                MessageLocation location = inRangeLocations[0];
+                database.child("Locations").child("LocationId").push().setValue(message);
             }
+            // Clear text field
+            newMessageEditText.setText("");
         }
     }
 
     private static double EARTH_RADIUS = 6373000;
 
-    private Message[] messagesWithin10Meters() {
-        ArrayList<Message> messages = new ArrayList<Message>();
+    private MessageLocation[] locationsWithin10Meters() {
+        ArrayList<MessageLocation> locations = new ArrayList<MessageLocation>();
         double lat1 = lastKnownLocation.getLatitude();
         double lon1 = lastKnownLocation.getLongitude();
 
-        for(Message message : existingMessages) {
-            double lat2 = message.latitude;
-            double lon2 = message.longitude;
+        for(MessageLocation location : existingLocations) {
+            double lat2 = location.latitude;
+            double lon2 = location.longitude;
 
             double dlon = lon2 - lon1;
             double dlat = lat2 - lat1;
@@ -85,35 +85,25 @@ public class NewMessageActivity extends AppCompatActivity {
             double a = Math.pow((x + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon/2)), 2);
             double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             double distance = EARTH_RADIUS * c;
-            messages.add(message);
+            if (distance < MIN_DISTANCE) {
+                locations.add(location);
+            }
         }
-        return (Message[]) messages.toArray();
+        return (MessageLocation[]) locations.toArray();
     }
 
-    public void sendMessage(String messageText) {
-
+    public Message createMessage(String messageText) {
+        // Initialise Message Object
+        Message message = new Message();
         if (lastKnownLocation != null) {
-
-            // Initialise Message Object
-            Message message = new Message();
 
             // Add Message Text
             message.messageText = messageText;
 
-            // Add location information
-            message.latitude = lastKnownLocation.getLatitude();
-            message.longitude = lastKnownLocation.getLongitude();
-
             // Add Timestamp
             message.timestamp = System.currentTimeMillis();
-
-            // Upload to server
-            database.child("Messages").push().setValue(message);
-
-            // Clear text field
-            newMessageEditText.setText("");
         } else {
-            Log.e("ERROR", "Location not found");
+            Log.e("ERROR", "MessageLocation not found");
             Context context = getApplicationContext();
             CharSequence text = "Unable to send message";
             int duration = Toast.LENGTH_SHORT;
@@ -121,35 +111,54 @@ public class NewMessageActivity extends AppCompatActivity {
             Toast toast = Toast.makeText(context, text, duration);
             toast.show();
         }
+        return message;
+    }
+
+    private MessageLocation createLocation(Message message) {
+        if (lastKnownLocation != null) {
+//            double lat = lastKnownLocation.getLatitude();
+//            double lon = lastKnownLocation.getLongitude();
+//            Message[] messages = new Message[]{message};
+//            return new MessageLocation(messages, lat, lon);
+        } else {
+            Log.e("ERROR", "MessageLocation not found");
+            Context context = getApplicationContext();
+            CharSequence text = "Unable to send message";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
+        double lat = lastKnownLocation.getLatitude();
+        double lon = lastKnownLocation.getLongitude();
+        Message[] messages = new Message[]{message};
+        return new MessageLocation(messages, lat, lon);
     }
 
     private void setupLocationManager() {
-        // Get a reference to the system Location Manager
+        // Get a reference to the system MessageLocation Manager
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        // Define a listener that responds to location updates
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                lastKnownLocation = location;
-            }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
-
-            public void onProviderEnabled(String provider) {
-            }
-
-            public void onProviderDisabled(String provider) {
-            }
-        };
-
-        // Register the listener with the Location Manager to receive location updates
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            locationProvider = locationManager.NETWORK_PROVIDER;
-
-            locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
+        try {
+            String gpsProvider = LocationManager.GPS_PROVIDER;
+            long interval = 0;
+            float minDistance = 1;
+            locationManager.requestLocationUpdates(gpsProvider, interval, minDistance, this);
         }
+        catch (SecurityException e) {
+            Log.e("GPS", "exception occured " + e.getMessage());
+        }
+        catch (Exception e) {
+            Log.e("GPS", "exception occured " + e.getMessage());
+        }
+
+//        // Register the listener with the MessageLocation Manager to receive location updates
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//
+//            locationProvider = locationManager.NETWORK_PROVIDER;
+//
+//            locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
+//        }
 
         lastKnownLocation = getLastBestLocation();
     }
@@ -181,16 +190,16 @@ public class NewMessageActivity extends AppCompatActivity {
         }
     }
 
-    private void setupExistingMessages() {
-        final DatabaseReference ref = database.child("Messages").getRef();
+    private void setupExistingLocations() {
+        final DatabaseReference ref = database.child("Locations").getRef();
 
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                existingMessages = new ArrayList<Message>();
+                existingLocations = new ArrayList<MessageLocation>();
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
-                    Message message = msgSnapshot.getValue(Message.class);
-                    existingMessages.add(message);
+                    MessageLocation message = msgSnapshot.getValue(MessageLocation.class);
+                    existingLocations.add(message);
                 }
                 ref.removeEventListener(this);
             }
@@ -200,5 +209,25 @@ public class NewMessageActivity extends AppCompatActivity {
                 System.out.println("The read failed: " + databaseError.getCode());
             }
         });
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        lastKnownLocation = location;
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 }
