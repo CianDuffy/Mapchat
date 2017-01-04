@@ -142,7 +142,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
                 locations.add(location);
             }
         }
-        return (MessageLocation[]) locations.toArray();
+        return locations.toArray(new MessageLocation[locations.size()]);
     }
 
     public Message createMessage(String messageText) {
