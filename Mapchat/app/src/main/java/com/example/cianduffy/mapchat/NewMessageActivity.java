@@ -18,6 +18,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NewMessageActivity extends AppCompatActivity  implements LocationListener {
 
@@ -28,7 +30,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     private String messageText;
     private DatabaseReference database;
 
-    private ArrayList<MessageLocation> existingLocations;
+    HashMap<String, MessageLocation> existingLocations;
     private int MIN_DISTANCE = 10;
 
     @Override
@@ -51,10 +53,11 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                existingLocations = new ArrayList<>();
-                for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
-                    MessageLocation message = msgSnapshot.getValue(MessageLocation.class);
-                    existingLocations.add(message);
+                existingLocations = new HashMap<String, MessageLocation>();
+                for (DataSnapshot locationSnapshot: dataSnapshot.getChildren()) {
+                    MessageLocation location = locationSnapshot.getValue(MessageLocation.class);
+                    String key = locationSnapshot.getKey();
+                    existingLocations.put(key, location);
                 }
                 ref.removeEventListener(this);
             }
@@ -93,9 +96,14 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
                 // Upload to server
                 database.child("Locations").push().setValue(location);
             } else {
-                // NOT SURE ABOUT THIS ID YET
                 MessageLocation location = inRangeLocations[0];
-                database.child("Locations").child("LocationId").push().setValue(message);
+                for (Map.Entry<String, MessageLocation> entry : existingLocations.entrySet()) {
+                    if (location.equals(entry.getValue())) {
+                        location.addMessage(message);
+//                        database.child("Locations").child(entry.getKey()).setValue(location);
+                        database.child("Locations").child(entry.getKey()).child("messages").push().setValue(message);
+                    }
+                }
             }
             // Clear text field
             newMessageEditText.setText("");
@@ -128,7 +136,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         double lat1 = lastKnownLocation.getLatitude();
         double lon1 = lastKnownLocation.getLongitude();
 
-        for(MessageLocation location : existingLocations) {
+        for(MessageLocation location : existingLocations.values()) {
             double lat2 = location.latitude;
             double lon2 = location.longitude;
 
@@ -160,7 +168,8 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     private MessageLocation createLocation(Message message) {
         double lat = lastKnownLocation.getLatitude();
         double lon = lastKnownLocation.getLongitude();
-        Message[] messages = new Message[]{message};
+        ArrayList<Message> messages = new ArrayList<Message>();
+        messages.add(message);
         return new MessageLocation(messages, lat, lon);
     }
 
