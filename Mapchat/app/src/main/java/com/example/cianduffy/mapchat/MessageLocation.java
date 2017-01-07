@@ -1,6 +1,7 @@
 package com.example.cianduffy.mapchat;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,5 +23,14 @@ public class MessageLocation {
 
     public void addMessage(Message message) {
         messages.add(message);
+    }
+
+    public String toString() {
+        StringBuffer locationDescription = new StringBuffer();
+        locationDescription.append("Lat: " + this.latitude + " / Lon: " + this.longitude + "\n");
+        for(Message msg : messages) {
+            locationDescription.append((new Date(msg.timestamp)) + ": " + msg.messageText + "\n");
+        }
+        return locationDescription.toString();
     }
 }
