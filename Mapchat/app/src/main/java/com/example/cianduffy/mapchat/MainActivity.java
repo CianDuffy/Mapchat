@@ -3,6 +3,7 @@ package com.example.cianduffy.mapchat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -39,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean checkForRequiredPermissions() {
-        boolean coarseLocationDenied = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_DENIED;
-        boolean fineLocationDenied = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED;
+        boolean coarseLocationDenied = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_DENIED;
+        boolean fineLocationDenied = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED;
         boolean permissionsDenied;
         boolean allPermissionsGranted;
 
@@ -51,10 +52,10 @@ public class MainActivity extends AppCompatActivity {
             requiredPermissions[0] = Manifest.permission.ACCESS_FINE_LOCATION;
             requiredPermissions[1] = Manifest.permission.ACCESS_COARSE_LOCATION;
 
-            requestPermissions(requiredPermissions, 1);
-            
-            coarseLocationDenied = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_DENIED;
-            fineLocationDenied = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED;
+            ActivityCompat.requestPermissions(this, requiredPermissions, 1);
+
+            coarseLocationDenied = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_DENIED;
+            fineLocationDenied = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED;
             permissionsDenied = (coarseLocationDenied || fineLocationDenied);
         }
 

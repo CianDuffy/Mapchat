@@ -36,15 +36,17 @@ public class MessageListActivity extends AppCompatActivity {
     }
 
     private void setupMessageList() {
-        final DatabaseReference ref = database.child("Messages").getRef();
+        final DatabaseReference ref = database.child("Locations").getRef();
 
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
-                    Message message = msgSnapshot.getValue(Message.class);
-                    if (message != null) {
-                        messages.add(message.timestamp + ": " + message.messageText);
+                    MessageLocation location = msgSnapshot.getValue(MessageLocation.class);
+                    if (location != null) {
+                        for (Message message : location.messages) {
+                            messages.add(message.timestamp + ": " + message.messageText);
+                        }
                     }
                 }
                 ref.removeEventListener(this);

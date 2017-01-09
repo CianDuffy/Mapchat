@@ -58,21 +58,25 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
     }
 
     private void setUpMap() {
-        final DatabaseReference ref = database.child("Messages").getRef();
+        final DatabaseReference ref = database.child("Locations").getRef();
 
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
-                    Message message = msgSnapshot.getValue(Message.class);
+                    MessageLocation location = msgSnapshot.getValue(MessageLocation.class);
                     //System.out.println(post);
-                    if (message != null) {
+                    if (location != null) {
                         // App 2: Todo: Add a map marker here based on the loc downloaded
-                        double lat = message.latitude;
-                        double lon = message.longitude;
+                        double lat = location.latitude;
+                        double lon = location.longitude;
+                        String locationText = "";
+                        for(Message msg : location.messages) {
+                            locationText += msg.messageText;
+                        }
                         map.addMarker(new MarkerOptions()
                                 .position(new LatLng(lat, lon))
-                                .title(message.messageText));
+                                .title(locationText));
                     }
                 }
                 ref.removeEventListener(this);
