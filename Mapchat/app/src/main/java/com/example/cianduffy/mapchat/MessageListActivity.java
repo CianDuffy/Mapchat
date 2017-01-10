@@ -61,9 +61,10 @@ public class MessageListActivity extends AppCompatActivity {
 
     private void populateList() {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, locationMessages);
+                                                           android.R.layout.simple_list_item_1,
+                                                           android.R.id.text1,
+                                                           locationMessages);
         messageList.setAdapter(adapter);
-
     }
 
 }

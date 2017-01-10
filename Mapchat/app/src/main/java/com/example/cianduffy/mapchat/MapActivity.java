@@ -3,7 +3,6 @@ package com.example.cianduffy.mapchat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -22,10 +21,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -78,19 +75,16 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                 markerMessages = new HashMap<Marker, String[]>();
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
                     MessageLocation location = msgSnapshot.getValue(MessageLocation.class);
-                    //System.out.println(post);
                     if (location != null) {
-                        // App 2: Todo: Add a map marker here based on the loc downloaded
-                        double lat = location.latitude;
-                        double lon = location.longitude;
-                        String[] locationMessages = new String[location.messages.size()];
-                        for(int i=0; i<locationMessages.length; i++) {
-                            Message msg = location.messages.get(i);
-                            locationMessages[i] = (new Date(msg.timestamp)) + ": " + msg.messageText;
+                        double lat = location.getLatitude();
+                        double lon = location.getLongitude();
+                        String[] formattedMessages = new String[location.getMessages().size()];
+                        for(int i=0; i<formattedMessages.length; i++) {
+                            Message msg = location.getMessages().get(i);
+                            formattedMessages[i] = (new Date(msg.getTimestamp())) + ": " + msg.getMessageText();
                         }
-                        Marker marker = map.addMarker(new MarkerOptions()
-                                .position(new LatLng(lat, lon)));
-                        markerMessages.put(marker, locationMessages);
+                        Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
+                        markerMessages.put(marker, formattedMessages);
                     }
                 }
                 ref.removeEventListener(this);
@@ -117,17 +111,15 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
             @Override
             public View getInfoContents(Marker marker) {
-                View v = getLayoutInflater().inflate(R.layout.marker_info, null);
-                ListView list = (ListView) v.findViewById(R.id.marker_message_list);
-                Set<Marker> ms = markerMessages.keySet();
-                Marker mar = (Marker) ms.toArray()[0];
+                View view = getLayoutInflater().inflate(R.layout.marker_info, null);
+                ListView list = (ListView) view.findViewById(R.id.marker_message_list);
                 int index = findMarkerIndex(marker);
                 String[] rows = (String[]) markerMessages.values().toArray()[index];
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(),
                                                                         R.layout.marker_info_row,
                                                                         rows);
                 list.setAdapter(adapter);
-                return v;
+                return view;
             }
         });
     }
