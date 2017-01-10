@@ -1,5 +1,6 @@
 package com.example.cianduffy.mapchat;
 
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ArrayAdapter;
@@ -21,7 +22,7 @@ public class MessageListActivity extends AppCompatActivity {
 
     private DatabaseReference database;
     private ListView messageList;
-    ArrayList<String> messages;
+    ArrayList<String> locationMessages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +30,7 @@ public class MessageListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_message_list);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         messageList = (ListView) findViewById(R.id.message_list);
-        messages = new ArrayList<String>();
+        locationMessages = new ArrayList<String>();
 
         database = FirebaseDatabase.getInstance().getReference();
         setupMessageList();
@@ -44,9 +45,7 @@ public class MessageListActivity extends AppCompatActivity {
                 for (DataSnapshot msgSnapshot: dataSnapshot.getChildren()) {
                     MessageLocation location = msgSnapshot.getValue(MessageLocation.class);
                     if (location != null) {
-                        for (Message message : location.messages) {
-                            messages.add(message.timestamp + ": " + message.messageText);
-                        }
+                        locationMessages.add(location.toString());
                     }
                 }
                 ref.removeEventListener(this);
@@ -62,9 +61,10 @@ public class MessageListActivity extends AppCompatActivity {
 
     private void populateList() {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, messages);
+                                                           android.R.layout.simple_list_item_1,
+                                                           android.R.id.text1,
+                                                           locationMessages);
         messageList.setAdapter(adapter);
-
     }
 
 }

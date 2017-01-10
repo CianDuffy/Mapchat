@@ -5,6 +5,22 @@ package com.example.cianduffy.mapchat;
  */
 
 public class Message {
-    public String messageText;
-    public long timestamp;
+    private String messageText;
+    private long timestamp;
+
+    public Message(){}
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getMessageText() {
+        return messageText;
+    }
+    public void setMessageText(String messageText) {
+        this.messageText = messageText;
+    }
 }

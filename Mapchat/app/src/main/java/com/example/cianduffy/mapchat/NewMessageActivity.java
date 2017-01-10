@@ -31,7 +31,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     private DatabaseReference database;
 
     HashMap<String, MessageLocation> existingLocations;
-    private int MIN_DISTANCE = 10;
+    private int MIN_DISTANCE = 10; //meters
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +48,11 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     private void setupExistingLocations() {
+        existingLocations = new HashMap<String, MessageLocation>();
         final DatabaseReference ref = database.child("Locations").getRef();
-
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                existingLocations = new HashMap<String, MessageLocation>();
                 for (DataSnapshot locationSnapshot: dataSnapshot.getChildren()) {
                     MessageLocation location = locationSnapshot.getValue(MessageLocation.class);
                     String key = locationSnapshot.getKey();
@@ -86,28 +85,28 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     public void composeMessage(View view) {
-        messageText = newMessageEditText.getText().toString();
 
         if (canSendMessage()) {
-            MessageLocation[] inRangeLocations = locationsWithin10Meters();
+            MessageLocation inRangeLocation = locationsWithin10Meters();
+            this.messageText = newMessageEditText.getText().toString();
             Message message = createMessage(messageText);
-            if(inRangeLocations.length == 0) {
+            if(inRangeLocation != null) {
                 MessageLocation location = createLocation(message);
-                // Upload to server
+                // Upload new location to server
                 database.child("Locations").push().setValue(location);
             } else {
-                MessageLocation location = inRangeLocations[0];
                 for (Map.Entry<String, MessageLocation> entry : existingLocations.entrySet()) {
-                    if (location.equals(entry.getValue())) {
-                        location.addMessage(message);
-//                        database.child("Locations").child(entry.getKey()).setValue(location);
-                        database.child("Locations").child(entry.getKey()).child("messages").push().setValue(message);
+                    if (entry.getValue().equals(inRangeLocation)) {
+                        inRangeLocation.addMessage(message);
+                        database.child("Locations").child(entry.getKey()).setValue(inRangeLocation);
                     }
                 }
             }
             // Clear text field
             newMessageEditText.setText("");
-        } else if (lastKnownLocation == null) {
+            // get new locations
+            setupExistingLocations();
+        } else {
             handleMessageSendError();
         }
     }
@@ -116,52 +115,29 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         return messageText.length() > 0 && lastKnownLocation != null;
     }
 
-    private void handleMessageSendError() {
-        if (messageText.length() <= 0) {
-            Log.e("ERROR", "Location unknown");
-        } else if (lastKnownLocation == null) {
-            Log.e("ERROR", "Location unknown");
-        }
-        CharSequence text = "Unable to send message";
-        Context context = getApplicationContext();
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
-    }
-
-    private static double EARTH_RADIUS = 6373000;
-
-    private MessageLocation[] locationsWithin10Meters() {
-        ArrayList<MessageLocation> locations = new ArrayList<MessageLocation>();
-        double lat1 = lastKnownLocation.getLatitude();
-        double lon1 = lastKnownLocation.getLongitude();
-
+    private MessageLocation locationsWithin10Meters() {
         for(MessageLocation location : existingLocations.values()) {
-            double lat2 = location.latitude;
-            double lon2 = location.longitude;
-
-            double dlon = lon2 - lon1;
-            double dlat = lat2 - lat1;
-            double x = Math.pow(Math.sin(dlat/2), 2);
-            double a = Math.pow((x + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon/2)), 2);
-            double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            double distance = EARTH_RADIUS * c;
+            // create target location
+            Location targetLocation = new Location("");
+            targetLocation.setLatitude(location.getLatitude());
+            targetLocation.setLongitude(location.getLongitude());
+            double distance = lastKnownLocation.distanceTo(targetLocation);
             if (distance < MIN_DISTANCE) {
-                locations.add(location);
+                return location;
             }
         }
-        return locations.toArray(new MessageLocation[locations.size()]);
+        return null;
     }
 
-    public Message createMessage(String messageText) {
+    public Message createMessage(String text) {
         // Initialise Message Object
         Message message = new Message();
 
         // Add Message Text
-        message.messageText = messageText;
+        message.setMessageText(text);
 
         // Add Timestamp
-        message.timestamp = System.currentTimeMillis();
+        message.setTimestamp(System.currentTimeMillis());
         return message;
     }
 
@@ -171,6 +147,23 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         ArrayList<Message> messages = new ArrayList<Message>();
         messages.add(message);
         return new MessageLocation(messages, lat, lon);
+    }
+
+    private void handleMessageSendError() {
+        if (messageText.length() <= 0) {
+            Log.e("ERROR", "Message has no content");
+        } else if (lastKnownLocation == null) {
+            Log.e("ERROR", "Location unknown");
+        }
+        CharSequence text = "Unable to send message";
+        displayToast(text);
+    }
+
+    private void displayToast(CharSequence text) {
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
     }
 
     @Override
