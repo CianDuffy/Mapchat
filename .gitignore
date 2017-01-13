@@ -1,6 +1,9 @@
 #Google Services file
 google-services.json
 
+#Google maps API key
+google_maps_api.xml
+
 #DS_Store
 .DS_Store
 
