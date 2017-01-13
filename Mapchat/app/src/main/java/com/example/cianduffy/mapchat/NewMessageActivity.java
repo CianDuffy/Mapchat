@@ -85,12 +85,11 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     public void composeMessage(View view) {
-
+        this.messageText = newMessageEditText.getText().toString();
         if (canSendMessage()) {
             MessageLocation inRangeLocation = locationsWithin10Meters();
-            this.messageText = newMessageEditText.getText().toString();
             Message message = createMessage(messageText);
-            if(inRangeLocation != null) {
+            if(inRangeLocation == null) {
                 MessageLocation location = createLocation(message);
                 // Upload new location to server
                 database.child("Locations").push().setValue(location);
