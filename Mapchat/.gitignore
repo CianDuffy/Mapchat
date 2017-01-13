@@ -7,3 +7,6 @@
 /build
 /captures
 .externalNativeBuild
+libs/
+src/main/res/values-v21/
+/app/src/main/res/values/google_maps_api.xml
