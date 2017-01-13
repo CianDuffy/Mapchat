@@ -1,8 +1,10 @@
 package com.example.cianduffy.mapchat;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by David on 03/01/2017.
@@ -27,9 +29,12 @@ public class MessageLocation {
 
     public String toString() {
         StringBuffer locationDescription = new StringBuffer();
-        locationDescription.append("Lat: " + this.latitude + " / Lon: " + this.longitude + "\n");
+        locationDescription.append("\nLatitude: " + this.latitude + "\nLongitude: " + this.longitude + "\n\n");
         for(Message msg : messages) {
-            locationDescription.append((new Date(msg.getTimestamp())) + ": " + msg.getMessageText() + "\n");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd,yyyy HH:mm", Locale.ENGLISH);
+            Date resultDate = new Date(msg.getTimestamp());
+            String dateString = simpleDateFormat.format(resultDate);
+            locationDescription.append(dateString + ": " + msg.getMessageText() + "\n");
         }
         return locationDescription.toString();
     }
