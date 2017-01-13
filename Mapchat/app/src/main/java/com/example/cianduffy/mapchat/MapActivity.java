@@ -3,6 +3,7 @@ package com.example.cianduffy.mapchat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -21,8 +22,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -34,6 +38,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
     private DatabaseReference database;
     GoogleMap map;
     private HashMap<Marker, String[]> markerMessages;
+    private long mostRecentTimestamp = 0;
+    private MessageLocation mostRecentLocation = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,7 +87,15 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                         String[] formattedMessages = new String[location.getMessages().size()];
                         for(int i=0; i<formattedMessages.length; i++) {
                             Message msg = location.getMessages().get(i);
-                            formattedMessages[i] = (new Date(msg.getTimestamp())) + ": " + msg.getMessageText();
+                            if (msg.getTimestamp() > mostRecentTimestamp) {
+                                mostRecentLocation = location;
+                                mostRecentTimestamp = msg.getTimestamp();
+                            }
+                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM dd,yyyy HH:mm", Locale.ENGLISH);
+                            Date resultDate = new Date(msg.getTimestamp());
+                            String dateString = simpleDateFormat.format(resultDate);
+
+                            formattedMessages[i] = dateString + ": " + msg.getMessageText();
                         }
                         Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(lat, lon)));
                         markerMessages.put(marker, formattedMessages);
@@ -96,7 +110,15 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
             }
         });
 
-        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(53.283912, -9.063874));
+        double latitude = 53.283912;
+        double longitude = -9.063874;
+
+        if (mostRecentLocation != null) {
+            latitude = mostRecentLocation.getLatitude();
+            longitude = mostRecentLocation.getLongitude();
+        }
+
+        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(latitude, longitude));
         CameraUpdate zoom=CameraUpdateFactory.zoomTo(15);
         map.moveCamera(center);
         map.animateCamera(zoom);
