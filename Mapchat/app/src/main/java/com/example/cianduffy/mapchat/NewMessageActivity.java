@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Created by Cian on 16/12/2016.
+ */
+
 public class NewMessageActivity extends AppCompatActivity  implements LocationListener {
 
     EditText newMessageEditText;
@@ -35,19 +39,21 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Setup View
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_message);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         newMessageEditText = (EditText) findViewById(R.id.new_message_edit_text);
 
+        // Get reference to Firebase DB
         database = FirebaseDatabase.getInstance().getReference();
-
+        // setup list of existing locations and LocationManager
         setupExistingLocations();
         setupLocationManager();
     }
 
     private void setupExistingLocations() {
+        // Populates HashMap with MessageLocation Objects from Firebase DB
         existingLocations = new HashMap<String, MessageLocation>();
         final DatabaseReference ref = database.child("Locations").getRef();
         ref.addValueEventListener(new ValueEventListener() {
@@ -73,6 +79,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         try {
+            // Register for location updates
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
         }
@@ -85,16 +92,21 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     public void composeMessage(View view) {
-
+        // Stores message text and checks if the message can be uploaded
+        this.messageText = newMessageEditText.getText().toString();
         if (canSendMessage()) {
+            // Check if there are locations within 10m of the new message and create Message Object
             MessageLocation inRangeLocation = locationsWithin10Meters();
-            this.messageText = newMessageEditText.getText().toString();
             Message message = createMessage(messageText);
-            if(inRangeLocation != null) {
+
+            if(inRangeLocation == null) {
+                // If locationWithin10Meters() returns null, a new MessageLocation Object is created
+                // and uploaded to Firebase
                 MessageLocation location = createLocation(message);
-                // Upload new location to server
                 database.child("Locations").push().setValue(location);
             } else {
+                // If locationWithin10Meters() returns a MessageLocation Object, the Message is
+                // appended to that MessageLocation in Firebase
                 for (Map.Entry<String, MessageLocation> entry : existingLocations.entrySet()) {
                     if (entry.getValue().equals(inRangeLocation)) {
                         inRangeLocation.addMessage(message);
@@ -104,7 +116,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
             }
             // Clear text field
             newMessageEditText.setText("");
-            // get new locations
+            // Update existing locations
             setupExistingLocations();
         } else {
             handleMessageSendError();
@@ -112,6 +124,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     private boolean canSendMessage() {
+        // Check if the user has typed a message and that there is a valid location
         return messageText.length() > 0 && lastKnownLocation != null;
     }
 
@@ -142,6 +155,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
     }
 
     private MessageLocation createLocation(Message message) {
+        // Creates MessageLocation Object
         double lat = lastKnownLocation.getLatitude();
         double lon = lastKnownLocation.getLongitude();
         ArrayList<Message> messages = new ArrayList<Message>();
@@ -166,6 +180,7 @@ public class NewMessageActivity extends AppCompatActivity  implements LocationLi
         toast.show();
     }
 
+    // LocationManager methods
     @Override
     public void onLocationChanged(Location location) {
         lastKnownLocation = location;

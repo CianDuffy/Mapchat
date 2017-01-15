@@ -26,19 +26,21 @@ public class MessageListActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // setup View
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message_list);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         messageList = (ListView) findViewById(R.id.message_list);
         locationMessages = new ArrayList<String>();
 
+        // get reference to Firebase DB
         database = FirebaseDatabase.getInstance().getReference();
         setupMessageList();
     }
 
     private void setupMessageList() {
         final DatabaseReference ref = database.child("Locations").getRef();
-
+        // Download all MessageLocation Objects from the DB and add them to the ListView
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -60,6 +62,7 @@ public class MessageListActivity extends AppCompatActivity {
     }
 
     private void populateList() {
+        // Add messages to ListView
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                                                            android.R.layout.simple_list_item_1,
                                                            android.R.id.text1,
